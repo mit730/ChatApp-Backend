@@ -38,7 +38,7 @@ io.use((socket, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token,  'chatapp@123');
+    const decoded = jwt.verify(token,  process.env.JWT_SECRET);
     socket.user = decoded;
     next();
   } catch (error) {
@@ -90,5 +90,5 @@ const connectDB = async () => {
 
 connectDB();
 
-const PORT = 5001;
+const PORT = process.env.PORT;
 server.listen(PORT, () => console.log(`Server is running on ${PORT}`));
