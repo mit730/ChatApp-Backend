@@ -13,6 +13,14 @@ const server = http.createServer(app);
 
 app.use(cors());
 app.use(express.json());
+app.use('/uploads', express.static('uploads'));
+// Create uploads directory if it doesn't exist
+const fs = require('fs');
+const path = require('path');
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir);
+}
 
 const io = require('socket.io')(server, {
   cors: {
@@ -23,7 +31,6 @@ const io = require('socket.io')(server, {
 app.use('/api/users', userRoutes);
 app.use('/api/chat', chatRoutes);
 
-// Middleware for socket.io to verify JWT token
 io.use((socket, next) => {
   const token = socket.handshake.auth.token;
   if (!token) {
@@ -31,15 +38,14 @@ io.use((socket, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, 'chatapp@123');
-    socket.user = decoded; // Attach user info to socket
+    const decoded = jwt.verify(token,  'chatapp@123');
+    socket.user = decoded;
     next();
   } catch (error) {
-    next(new Error('Authentication error: Invalid token.'));
+    console.error('Token verification failed:', error.message);
+    next(new Error('Authentication error: Invalid or expired token.'));
   }
 });
-
-// ==========================================================================================
 
 io.on('connection', (socket) => {
   console.log(`${socket.user.username} (ID: ${socket.user.userId}) just connected`);
@@ -47,6 +53,7 @@ io.on('connection', (socket) => {
   socket.on("joinRoom", ({ roomId }) => {
     socket.join(roomId);
     console.log(`${socket.user.username} joined room: ${roomId}`);
+    console.log("Current rooms:", [...socket.rooms]);
   });
 
   socket.on('send_message', async (data) => {
@@ -66,8 +73,6 @@ io.on('connection', (socket) => {
     console.log(`${socket.user.username} disconnected`);
   });
 });
-
-// ============================================================================================
 
 const url = process.env.MONGODB_URI;
 const connectDB = async () => {
