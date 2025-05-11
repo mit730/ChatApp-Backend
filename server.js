@@ -69,6 +69,31 @@ io.on('connection', (socket) => {
     }
   });
 
+  // Video call signaling events
+  socket.on('start_video_call', ({ roomId, caller }) => {
+    socket.to(roomId).emit('incoming_video_call', { caller });
+  });
+
+  socket.on('accept_video_call', ({ roomId, acceptor }) => {
+    socket.to(roomId).emit('video_call_accepted', { acceptor });
+  });
+
+  socket.on('offer', ({ roomId, offer }) => {
+    socket.to(roomId).emit('offer', { offer });
+  });
+
+  socket.on('answer', ({ roomId, answer }) => {
+    socket.to(roomId).emit('answer', { answer });
+  });
+
+  socket.on('ice-candidate', ({ roomId, candidate }) => {
+    socket.to(roomId).emit('ice-candidate', { candidate });
+  });
+
+  socket.on('end_video_call', ({ roomId }) => {
+    socket.to(roomId).emit('video_call_ended');
+  });
+
   socket.on('disconnect', () => {
     console.log(`${socket.user.username} disconnected`);
   });
