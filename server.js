@@ -53,7 +53,7 @@ io.on('connection', (socket) => {
   socket.on("joinRoom", ({ roomId }) => {
     socket.join(roomId);
     console.log(`${socket.user.username} joined room: ${roomId}`);
-    console.log("Current rooms:", [...socket.rooms]);
+    console.log("Current rooms for user:", [...socket.rooms]);
   });
 
   socket.on('send_message', async (data) => {
@@ -69,28 +69,20 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Video call signaling events
-  socket.on('start_video_call', ({ roomId, caller }) => {
-    socket.to(roomId).emit('incoming_video_call', { caller });
+  // Video call signaling events using Socket.IO
+  socket.on('start_video_call', ({ roomId, callerId, callerPeerId }) => {
+    console.log(`Received start_video_call event from ${callerId} for room ${roomId}`);
+    console.log(`Broadcasting incoming_video_call to room ${roomId}`);
+    socket.to(roomId).emit('incoming_video_call', { callerId, callerPeerId });
   });
 
-  socket.on('accept_video_call', ({ roomId, acceptor }) => {
-    socket.to(roomId).emit('video_call_accepted', { acceptor });
-  });
-
-  socket.on('offer', ({ roomId, offer }) => {
-    socket.to(roomId).emit('offer', { offer });
-  });
-
-  socket.on('answer', ({ roomId, answer }) => {
-    socket.to(roomId).emit('answer', { answer });
-  });
-
-  socket.on('ice-candidate', ({ roomId, candidate }) => {
-    socket.to(roomId).emit('ice-candidate', { candidate });
+  socket.on('accept_video_call', ({ roomId, acceptorPeerId }) => {
+    console.log(`Received accept_video_call event for room ${roomId}`);
+    socket.to(roomId).emit('video_call_accepted', { acceptorPeerId });
   });
 
   socket.on('end_video_call', ({ roomId }) => {
+    console.log(`Received end_video_call event for room ${roomId}`);
     socket.to(roomId).emit('video_call_ended');
   });
 
